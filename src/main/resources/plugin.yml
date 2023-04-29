@@ -1,0 +1,6 @@
+name: PigeonChickenDupe
+version: '${version}'
+main: network.pigeon.PigeonChickenDupe
+authors: [ Xzai ]
+description: 鸡刷插件
+website: https://xzai.cloud
