@@ -19,7 +19,6 @@ repositories {
 
 dependencies {
     compileOnly "com.destroystokyo.paper:paper-api:1.12.2-R0.1-SNAPSHOT"
-    compileOnly "org.bstats:bstats-bukkit:3.0.2"
 }
 
 def targetJavaVersion = 8

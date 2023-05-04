@@ -1,7 +1,9 @@
 package network.pigeon;
 
-import org.bstats.bukkit.Metrics;
-import org.bukkit.*;
+import org.bukkit.ChatColor;
+import org.bukkit.Effect;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Chicken;
 import org.bukkit.entity.Entity;
@@ -25,10 +27,6 @@ public final class PigeonChickenDupe extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-
-        int pluginId = 18371;
-        Metrics metrics = new Metrics(this, pluginId);
-
         // 注册事件监听器
         getServer().getPluginManager().registerEvents(this, this);
 
@@ -121,16 +119,14 @@ public final class PigeonChickenDupe extends JavaPlugin implements Listener {
         int SpawnNumber = getConfig().getInt("SpawnNumber");
         try {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(new File("./plugins/PigeonChickenDupe/data.yml"));
-            for (World world : getServer().getWorlds()) {
-                for (Entity entity : world.getEntities()) {
-                    if (entity instanceof Chicken) {
-                        UUID uuid = entity.getUniqueId();
-                        String key = uuid.toString();
-                        if (config.contains(key)) {
-                            ItemStack itemStack = config.getItemStack(key);
-                            itemStack.setAmount(SpawnNumber);
-                            entity.getWorld().dropItemNaturally(entity.getLocation(), itemStack);
-                        }
+            for (Entity entity : getServer().getWorlds().get(0).getEntities()) {
+                if (entity instanceof Chicken) {
+                    UUID uuid = entity.getUniqueId();
+                    String key = uuid.toString();
+                    if (config.contains(key)) {
+                        ItemStack itemStack = config.getItemStack(key);
+                        itemStack.setAmount(SpawnNumber);
+                        entity.getWorld().dropItemNaturally(entity.getLocation(), itemStack);
                     }
                 }
             }
