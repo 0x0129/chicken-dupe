@@ -53,9 +53,7 @@ public final class PigeonChickenDupe extends JavaPlugin implements Listener {
         // 启动插件时，创建计时器
         taskId = getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             // 定期执行任务
-            workers.submit(()->{
                 spawnItemsForChickens();
-            });
         }, 0L, intervalTicks); // 每1秒等于20tick
         this.workers = Executors.newFixedThreadPool(2);
         // 输出插件加载成功信息
