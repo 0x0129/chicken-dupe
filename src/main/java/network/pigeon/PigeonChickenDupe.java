@@ -19,11 +19,15 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 public final class PigeonChickenDupe extends JavaPlugin implements Listener {
     private File dataFile;
     private int taskId;
+
+    private ExecutorService workers;
 
     @Override
     public void onEnable() {
@@ -49,14 +53,17 @@ public final class PigeonChickenDupe extends JavaPlugin implements Listener {
         // 启动插件时，创建计时器
         taskId = getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             // 定期执行任务
-            spawnItemsForChickens();
+            workers.submit(()->{
+                spawnItemsForChickens();
+            });
         }, 0L, intervalTicks); // 每1秒等于20tick
-
+        this.workers = Executors.newFixedThreadPool(2);
         // 输出插件加载成功信息
         getLogger().info(ChatColor.GREEN + "--------------------");
         getLogger().info(ChatColor.GREEN + "PigeonChickenDupe");
         getLogger().info(ChatColor.GREEN + "插件加载成功");
         getLogger().info(ChatColor.GREEN + "--------------------");
+
     }
 
     @Override
@@ -68,7 +75,7 @@ public final class PigeonChickenDupe extends JavaPlugin implements Listener {
     public void onDisable() {
         // 关闭插件时，取消计时器
         getServer().getScheduler().cancelTask(taskId);
-
+        workers.shutdown();
         // 输出插件卸载成功信息
         getLogger().info(ChatColor.GREEN + "--------------------");
         getLogger().info(ChatColor.GREEN + "PigeonChickenDupe");
@@ -84,16 +91,22 @@ public final class PigeonChickenDupe extends JavaPlugin implements Listener {
             Chicken chicken = (Chicken) entity;
             // 如果鸡已经成年
             if (chicken.isAdult()) {
-                Location location = event.getRightClicked().getLocation();
-                YamlConfiguration data = YamlConfiguration.loadConfiguration(dataFile);
                 Player player = event.getPlayer();
                 ItemStack item = player.getInventory().getItemInMainHand();
                 Material material = item.getType();
                 if (material != Material.AIR) {
                     // 将该鸡的唯一ID和手中物品存入数据文件
-                    data.set(String.valueOf(chicken.getUniqueId()), item);
-                    data.save(dataFile);
+                    workers.submit(() -> {
+                        try {
+                            YamlConfiguration data = YamlConfiguration.loadConfiguration(dataFile);
+                            data.set(String.valueOf(chicken.getUniqueId()), item);
+                            data.save(dataFile);
+                        } catch (IOException e) {
+
+                        }
+                    });
                     // 播放音效，设置鸡的名称为手中物品的名称
+                    Location location = event.getRightClicked().getLocation();
                     player.playEffect(location, Effect.CLICK2, null);
                     chicken.setCustomName(ChatColor.GREEN + "[物品] " + ChatColor.GOLD + item.getI18NDisplayName());
                     chicken.setCustomNameVisible(true);
@@ -106,11 +119,17 @@ public final class PigeonChickenDupe extends JavaPlugin implements Listener {
     public void onEntityDeath(EntityDeathEvent event) throws IOException {
         Entity entity = event.getEntity();
         if (entity instanceof Chicken) {
-            String id = String.valueOf(entity.getUniqueId());
-            YamlConfiguration data = YamlConfiguration.loadConfiguration(dataFile);
-            // 从数据文件中删除该鸡的记录
-            data.set(id, null);
-            data.save(dataFile);
+            workers.submit(() -> {
+                try {
+                    String id = String.valueOf(entity.getUniqueId());
+                    YamlConfiguration data = YamlConfiguration.loadConfiguration(dataFile);
+                    // 从数据文件中删除该鸡的记录
+                    data.set(id, null);
+                    data.save(dataFile);
+                } catch (IOException e) {
+
+                }
+            });
         }
     }
     private void spawnItemsForChickens() {
@@ -134,4 +153,5 @@ public final class PigeonChickenDupe extends JavaPlugin implements Listener {
             getLogger().log(Level.SEVERE, "读取文件失败", ex);
         }
     }
+
 }
